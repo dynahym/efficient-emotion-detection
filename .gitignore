@@ -1,0 +1,46 @@
+# Dataset images and data
+data/FER2013/train/
+data/FER2013/test/
+data/*/train/
+data/*/test/
+data/**/*.jpg
+data/**/*.jpeg
+data/**/*.png
+data/**/*.csv
+
+# Keep the README
+!data/README.md
+
+# Model checkpoints
+models/**/*.pth
+models/**/*.pt
+checkpoints/
+
+# Results and logs
+results/
+*.log
+logs/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+*.egg-info/
+
+# Jupyter
+.ipynb_checkpoints
+*.ipynb_checkpoints
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
