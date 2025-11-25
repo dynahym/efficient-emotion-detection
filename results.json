@@ -1,0 +1,10 @@
+{
+    "SqueezeNet": {
+        "accuracy": 62.62,
+        "inference_time_sec": 16.88,
+        "energy_consumed_kwh": 0.000753,
+        "co2_emissions_kg": 0.000478,
+        "flops": "32.01 MMac",
+        "parameters": "735.56 k"
+    }
+}
