@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torchvision import models
 
 
 
@@ -201,170 +202,26 @@ class MobileNetV2(nn.Module):
 
 # ---------- MobileNetV3 ----------
 
-class h_swish(nn.Module):
-    def forward(self, x):
-        return x * F.relu6(x + 3, inplace=True) / 6
-
-
-class h_sigmoid(nn.Module):
-    def forward(self, x):
-        return F.relu6(x + 3, inplace=True) / 6
-
-
-class SEBlock(nn.Module):
-    def __init__(self, in_channels, reduction=4):
-        super().__init__()
-        squeezed = in_channels // reduction
-        self.se = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),
-            nn.Conv2d(in_channels, squeezed, 1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(squeezed, in_channels, 1),
-            h_sigmoid()
-        )
-
-    def forward(self, x):
-        return x * self.se(x)
-
-
-class MobileNetV3Block(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel, stride, expansion,
-                 use_se, activation):
-        super().__init__()
-
-        hidden_dim = in_channels * expansion
-
-        # Activation type
-        act = nn.ReLU(inplace=True) if activation == "RE" else h_swish()
-
-        self.use_residual = (stride == 1 and in_channels == out_channels)
-
-        layers = []
-
-        # Expansion
-        if expansion != 1:
-            layers += [
-                nn.Conv2d(in_channels, hidden_dim, 1, bias=False),
-                nn.BatchNorm2d(hidden_dim),
-                act
-            ]
-
-        # Depthwise
-        layers += [
-            nn.Conv2d(hidden_dim, hidden_dim, kernel, stride,
-                      padding=kernel//2, groups=hidden_dim, bias=False),
-            nn.BatchNorm2d(hidden_dim),
-            act
-        ]
-
-        # Squeeze-and-Excitation
-        if use_se:
-            layers.append(SEBlock(hidden_dim))
-
-        # Projection
-        layers += [
-            nn.Conv2d(hidden_dim, out_channels, 1, bias=False),
-            nn.BatchNorm2d(out_channels),
-        ]
-
-        self.conv = nn.Sequential(*layers)
-
-    def forward(self, x):
-        if self.use_residual:
-            return x + self.conv(x)
-        return self.conv(x)
-
-
 class MobileNetV3(nn.Module):
-    def __init__(self, num_classes=7, in_channels=1, mode="small"):
+    def __init__(self, num_classes=7, in_channels=1):
         super().__init__()
+        self.model = models.mobilenet_v3_small(pretrained=False)
 
-        assert mode in ["small", "large"]
-
-        # Configurations based on the official MobileNetV3 paper
-        if mode == "small":
-            cfgs = [
-                # k, exp,  out, se, act, s
-                [3,  16,  16,  True,  "RE", 2],
-                [3,  72,  24,  False, "RE", 2],
-                [3,  88,  24,  False, "RE", 1],
-
-                [5,  96,  40,  True,  "HS", 2],
-                [5, 240,  40,  True,  "HS", 1],
-                [5, 240,  40,  True,  "HS", 1],
-
-                [5, 120,  48,  True,  "HS", 1],
-                [5, 144,  48,  True,  "HS", 1],
-
-                [5, 288,  96,  True,  "HS", 2],
-                [5, 576,  96,  True,  "HS", 1],
-                [5, 576,  96,  True,  "HS", 1],
-            ]
-            last_channel = 576
-
-        else:  # large
-            cfgs = [
-                # k, exp,  out, se, act, s
-                [3,  16,  16,  False, "RE", 1],
-                [3,  64,  24,  False, "RE", 2],
-                [3,  72,  24,  False, "RE", 1],
-
-                [5,  72,  40,  True,  "RE", 2],
-                [5, 120,  40,  True,  "RE", 1],
-                [5, 120,  40,  True,  "RE", 1],
-
-                [3, 240,  80,  False, "HS", 2],
-                [3, 200,  80,  False, "HS", 1],
-                [3, 184,  80,  False, "HS", 1],
-                [3, 184,  80,  False, "HS", 1],
-
-                [3, 480, 112,  True,  "HS", 1],
-                [3, 672, 112,  True,  "HS", 1],
-
-                [5, 672, 160,  True,  "HS", 2],
-                [5, 960, 160,  True,  "HS", 1],
-                [5, 960, 160,  True,  "HS", 1],
-            ]
-            last_channel = 960
-
-        # First convolution
-        input_channel = 16
-        self.stem = nn.Sequential(
-            nn.Conv2d(in_channels, input_channel, 3, 2, 1, bias=False),
-            nn.BatchNorm2d(input_channel),
-            h_swish()
+        # Patch input
+        self.model.features[0][0] = nn.Conv2d(
+            in_channels=in_channels,
+            out_channels=self.model.features[0][0].out_channels,
+            kernel_size=self.model.features[0][0].kernel_size,
+            stride=self.model.features[0][0].stride,
+            padding=self.model.features[0][0].padding,
+            bias=False
         )
 
-        # Build blocks
-        layers = []
-        for k, exp, out_c, se, act, s in cfgs:
-            layers.append(
-                MobileNetV3Block(input_channel, out_c, k, s, exp, se, act)
-            )
-            input_channel = out_c
-
-        self.blocks = nn.Sequential(*layers)
-
-        # Final layers
-        self.final_expand = nn.Sequential(
-            nn.Conv2d(input_channel, last_channel, 1, bias=False),
-            nn.BatchNorm2d(last_channel),
-            h_swish(),
+        # Patch classifier
+        self.model.classifier[3] = nn.Linear(
+            self.model.classifier[3].in_features,
+            num_classes
         )
-
-        self.pool = nn.AdaptiveAvgPool2d(1)
-
-        self.classifier = nn.Sequential(
-            nn.Linear(last_channel, 1280),
-            h_swish(),
-            nn.Dropout(0.2),
-            nn.Linear(1280, num_classes)
-        )
-
+        
     def forward(self, x):
-        x = self.stem(x)
-        x = self.blocks(x)
-        x = self.final_expand(x)
-        x = self.pool(x)
-        x = x.view(x.size(0), -1)
-        return self.classifier(x)
+        return self.model(x)
