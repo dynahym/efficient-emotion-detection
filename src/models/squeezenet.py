@@ -33,28 +33,24 @@ class SqueezeNet(nn.Module):
         super(SqueezeNet, self).__init__()
         
         # Initial convolution layer
-        # Input: 1x48x48 -> Output: 96x23x23 (with stride=2)
         self.conv1 = nn.Conv2d(in_channels, 96, kernel_size=7, stride=2, padding=3)
         self.bn1 = nn.BatchNorm2d(96)
         self.relu1 = nn.ReLU(inplace=True)
         self.maxpool1 = nn.MaxPool2d(kernel_size=3, stride=2, ceil_mode=True)
         
         # Fire modules
-        # After maxpool1: 96x12x12
-        self.fire2 = Fire(96, 16, 64, 64)      # Output: 128x12x12
-        self.fire3 = Fire(128, 16, 64, 64)     # Output: 128x12x12
-        self.fire4 = Fire(128, 32, 128, 128)   # Output: 256x12x12
+        self.fire2 = Fire(96, 16, 64, 64)      
+        self.fire3 = Fire(128, 16, 64, 64)     
+        self.fire4 = Fire(128, 32, 128, 128)   
         self.maxpool4 = nn.MaxPool2d(kernel_size=3, stride=2, ceil_mode=True)
         
-        # After maxpool4: 256x6x6
-        self.fire5 = Fire(256, 32, 128, 128)   # Output: 256x6x6
-        self.fire6 = Fire(256, 48, 192, 192)   # Output: 384x6x6
-        self.fire7 = Fire(384, 48, 192, 192)   # Output: 384x6x6
-        self.fire8 = Fire(384, 64, 256, 256)   # Output: 512x6x6
+        self.fire5 = Fire(256, 32, 128, 128)   
+        self.fire6 = Fire(256, 48, 192, 192)   
+        self.fire7 = Fire(384, 48, 192, 192)   
+        self.fire8 = Fire(384, 64, 256, 256)   
         self.maxpool8 = nn.MaxPool2d(kernel_size=3, stride=2, ceil_mode=True)
         
-        # After maxpool8: 512x3x3
-        self.fire9 = Fire(512, 64, 256, 256)   # Output: 512x3x3
+        self.fire9 = Fire(512, 64, 256, 256)   
         
         # Dropout for regularization
         self.dropout = nn.Dropout(p=0.5)
