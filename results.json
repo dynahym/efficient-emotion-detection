@@ -1,10 +1,50 @@
 {
     "SqueezeNet": {
         "accuracy": 62.62,
-        "inference_time_sec": 16.88,
-        "energy_consumed_kwh": 0.000753,
-        "co2_emissions_kg": 0.000478,
+        "inference_time_sec": 15.15,
+        "energy_consumed_kwh": 0.00073,
+        "co2_emissions_kg": 0.000463,
         "flops": "32.01 MMac",
         "parameters": "735.56 k"
+    },
+    "MobileNetV1": {
+        "accuracy": 62.16,
+        "inference_time_sec": 14.66,
+        "energy_consumed_kwh": 0.000643,
+        "co2_emissions_kg": 0.000408,
+        "flops": "29.48 MMac",
+        "parameters": "3.21 M"
+    },
+    "MobileNetV2": {
+        "accuracy": 61.77,
+        "inference_time_sec": 13.34,
+        "energy_consumed_kwh": 0.000598,
+        "co2_emissions_kg": 0.00038,
+        "flops": "17.19 MMac",
+        "parameters": "2.23 M"
+    },
+    "MobileNetV3": {
+        "accuracy": 59.42,
+        "inference_time_sec": 7.25,
+        "energy_consumed_kwh": 0.000342,
+        "co2_emissions_kg": 0.000217,
+        "flops": "4.21 MMac",
+        "parameters": "1.52 M"
+    },
+    "ShiftNet": {
+        "accuracy": 60.07,
+        "inference_time_sec": 9.18,
+        "energy_consumed_kwh": 0.000238,
+        "co2_emissions_kg": 0.000151,
+        "flops": "7.95 MMac",
+        "parameters": "179.94 k"
+    },
+    "ShuffleNetV2": {
+        "accuracy": 63.29,
+        "inference_time_sec": 13.92,
+        "energy_consumed_kwh": 0.000647,
+        "co2_emissions_kg": 0.000411,
+        "flops": "26.18 MMac",
+        "parameters": "1.26 M"
     }
 }
